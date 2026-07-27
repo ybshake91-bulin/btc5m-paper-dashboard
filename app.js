@@ -92,9 +92,9 @@ function updateClock(current) {
 async function refresh() {
   if (refreshing || document.hidden) return;
   refreshing = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
     let response = isGitHubPages
       ? await fetch(`./data/dashboard.json?t=${Date.now()}`, {
           cache: "no-store",
@@ -111,7 +111,6 @@ async function refresh() {
       });
     }
     const data = await response.json();
-    clearTimeout(timeout);
     currentMarket = data.current;
     updateClock(currentMarket);
     const healthy = data.health?.status === "healthy";
@@ -136,6 +135,7 @@ async function refresh() {
     document.querySelector(".health").classList.remove("ok");
     $("healthText").textContent = "连接失败";
   } finally {
+    clearTimeout(timeout);
     refreshing = false;
   }
 }
