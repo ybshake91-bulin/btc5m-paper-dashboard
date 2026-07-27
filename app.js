@@ -2,6 +2,7 @@ const $ = (id) => document.getElementById(id);
 const money = (v) => `${v >= 0 ? "+" : ""}${Number(v || 0).toFixed(4)} U`;
 const stake = (v) => v == null ? "—" : `${Number(v).toFixed(4)} U`;
 const pct = (v) => v == null ? "—" : `${(Number(v) * 100).toFixed(2)}%`;
+let currentMarket = null;
 
 function colorize(el, value) {
   el.classList.remove("positive", "negative");
@@ -87,8 +88,11 @@ function updateClock(current) {
 
 async function refresh() {
   try {
-    let response = await fetch("/api/dashboard", {cache:"no-store"});
-    if (!response.ok) {
+    const isGitHubPages = window.location.hostname.endsWith("github.io");
+    let response = isGitHubPages
+      ? await fetch(`./data/dashboard.json?t=${Date.now()}`, {cache:"no-store"})
+      : await fetch("/api/dashboard", {cache:"no-store"});
+    if (!response.ok && !isGitHubPages) {
       response = await fetch(`./data/dashboard.json?t=${Date.now()}`, {cache:"no-store"});
     }
     const data = await response.json();
@@ -97,7 +101,8 @@ async function refresh() {
     colorize($("totalPnl"), summary.total_realized_pnl);
     $("openRisk").textContent = stake(summary.total_open_risk);
     $("marketCount").textContent = `已完成 ${summary.completed_markets || 0} 个市场`;
-    updateClock(data.current);
+    currentMarket = data.current;
+    updateClock(currentMarket);
     renderLine("up", lines.Up); renderLine("down", lines.Down);
     renderTrades(data.trades || []); drawChart(data.chart || []);
     const last = data.chart?.at(-1);
@@ -112,4 +117,6 @@ async function refresh() {
     $("healthText").textContent = "连接失败";
   }
 }
-refresh(); setInterval(refresh, 5000); setInterval(() => fetch("/api/dashboard").then(r=>r.json()).then(d=>updateClock(d.current)).catch(()=>{}), 1000);
+refresh();
+setInterval(refresh, 5000);
+setInterval(() => updateClock(currentMarket), 1000);
