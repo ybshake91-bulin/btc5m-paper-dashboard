@@ -2,7 +2,10 @@ const $ = (id) => document.getElementById(id);
 const money = (v) => `${v >= 0 ? "+" : ""}${Number(v || 0).toFixed(4)} U`;
 const stake = (v) => v == null ? "—" : `${Number(v).toFixed(4)} U`;
 const pct = (v) => v == null ? "—" : `${(Number(v) * 100).toFixed(2)}%`;
+const isGitHubPages = window.location.hostname.endsWith("github.io");
 let currentMarket = null;
+let lastDataVersion = null;
+let refreshing = false;
 
 function colorize(el, value) {
   el.classList.remove("positive", "negative");
@@ -87,36 +90,58 @@ function updateClock(current) {
 }
 
 async function refresh() {
+  if (refreshing || document.hidden) return;
+  refreshing = true;
   try {
-    const isGitHubPages = window.location.hostname.endsWith("github.io");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
     let response = isGitHubPages
-      ? await fetch(`./data/dashboard.json?t=${Date.now()}`, {cache:"no-store"})
-      : await fetch("/api/dashboard", {cache:"no-store"});
+      ? await fetch(`./data/dashboard.json?t=${Date.now()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+      : await fetch("/api/dashboard", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
     if (!response.ok && !isGitHubPages) {
-      response = await fetch(`./data/dashboard.json?t=${Date.now()}`, {cache:"no-store"});
+      response = await fetch(`./data/dashboard.json?t=${Date.now()}`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
     }
     const data = await response.json();
+    clearTimeout(timeout);
+    currentMarket = data.current;
+    updateClock(currentMarket);
+    const healthy = data.health?.status === "healthy";
+    document.querySelector(".health").classList.toggle("ok", healthy);
+    $("healthText").textContent = healthy ? "数据正常" : "数据延迟";
+    $("updatedAt").textContent = `更新 ${new Date(
+      data.sourceUpdatedAt || data.generatedAt
+    ).toLocaleTimeString("zh-CN")}`;
+    if (data.dataVersion && data.dataVersion === lastDataVersion) return;
+    lastDataVersion = data.dataVersion || data.generatedAt;
     const summary = data.summary || {}, lines = summary.lines || {};
     $("totalPnl").textContent = money(summary.total_realized_pnl);
     colorize($("totalPnl"), summary.total_realized_pnl);
     $("openRisk").textContent = stake(summary.total_open_risk);
     $("marketCount").textContent = `已完成 ${summary.completed_markets || 0} 个市场`;
-    currentMarket = data.current;
-    updateClock(currentMarket);
     renderLine("up", lines.Up); renderLine("down", lines.Down);
     renderTrades(data.trades || []); drawChart(data.chart || []);
     const last = data.chart?.at(-1);
     $("upAsk").textContent = last?.upAsk ? last.upAsk.toFixed(2) : "—";
     $("downAsk").textContent = last?.downAsk ? last.downAsk.toFixed(2) : "—";
-    $("updatedAt").textContent = `更新 ${new Date(data.generatedAt).toLocaleTimeString("zh-CN")}`;
-    const healthy = data.health?.status === "healthy";
-    document.querySelector(".health").classList.toggle("ok", healthy);
-    $("healthText").textContent = healthy ? "数据正常" : "数据延迟";
   } catch {
     document.querySelector(".health").classList.remove("ok");
     $("healthText").textContent = "连接失败";
+  } finally {
+    refreshing = false;
   }
 }
 refresh();
-setInterval(refresh, 5000);
+setInterval(refresh, isGitHubPages ? 60000 : 2000);
 setInterval(() => updateClock(currentMarket), 1000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refresh();
+});
