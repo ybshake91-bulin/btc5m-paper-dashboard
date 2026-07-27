@@ -1,3 +1,6 @@
 __pycache__/
 sync.log
+sync_stdout.log
+sync_stderr.log
 *.pyc
+publish_once.ps1
