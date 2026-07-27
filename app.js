@@ -28,9 +28,18 @@ function renderLine(prefix, line) {
   colorize(pnl, line.realized_pnl);
   $(`${prefix}Round`).textContent = `ROUND ${line.current_round}`;
   $(`${prefix}Stake`).textContent = stake(line.current_stake);
-  $(`${prefix}Status`).textContent = line.stopped ? "已停止" : line.current_filled ? "已成交" : "挂单中";
+  const stateLabel = line.stopped
+    ? "已停止"
+    : line.waiting_next_market
+      ? "等待下一期"
+      : line.current_filled
+        ? "已成交"
+        : "挂单中";
+  $(`${prefix}Status`).textContent = `C${line.current_cycle || 1} · ${stateLabel}`;
   $(`${prefix}Record`).textContent = `${line.fills} / ${line.wins}`;
   $(`${prefix}Rate`).textContent = pct(line.hit_rate);
+  $(`${prefix}Cycles`).textContent = line.cycles_completed ?? 0;
+  $(`${prefix}FailedCycles`).textContent = line.cycles_failed ?? 0;
   renderRounds($(`${prefix}Rounds`), line.hits_by_round_1_to_10);
 }
 
