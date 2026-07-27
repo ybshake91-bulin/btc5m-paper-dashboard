@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BTC 5M · Virtual Account</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">POLYMARKET · PAPER ENGINE</p>
+        <h1>BTC 5分钟虚拟账户</h1>
+      </div>
+      <div class="health"><span id="healthDot"></span><span id="healthText">连接中</span></div>
+    </header>
+
+    <section class="hero-grid">
+      <article class="metric hero-profit">
+        <p>已实现总盈亏</p>
+        <strong id="totalPnl">—</strong>
+        <small id="marketCount">—</small>
+      </article>
+      <article class="metric">
+        <p>当前未结算风险</p>
+        <strong id="openRisk">—</strong>
+        <small>Up + Down 已成交本金</small>
+      </article>
+      <article class="metric">
+        <p>当前市场</p>
+        <strong id="marketClock">—</strong>
+        <small id="marketSlug">等待完整市场</small>
+      </article>
+    </section>
+
+    <section class="lines-grid">
+      <article class="line-card up-card">
+        <div class="line-head">
+          <div><span class="direction up">UP</span><h2>上涨线</h2></div>
+          <span class="round" id="upRound">—</span>
+        </div>
+        <div class="line-pnl" id="upPnl">—</div>
+        <div class="stats">
+          <div><span>当前仓位</span><b id="upStake">—</b></div>
+          <div><span>状态</span><b id="upStatus">—</b></div>
+          <div><span>成交 / 命中</span><b id="upRecord">—</b></div>
+          <div><span>命中率</span><b id="upRate">—</b></div>
+        </div>
+        <div class="round-chart" id="upRounds"></div>
+      </article>
+
+      <article class="line-card down-card">
+        <div class="line-head">
+          <div><span class="direction down">DOWN</span><h2>下跌线</h2></div>
+          <span class="round" id="downRound">—</span>
+        </div>
+        <div class="line-pnl" id="downPnl">—</div>
+        <div class="stats">
+          <div><span>当前仓位</span><b id="downStake">—</b></div>
+          <div><span>状态</span><b id="downStatus">—</b></div>
+          <div><span>成交 / 命中</span><b id="downRecord">—</b></div>
+          <div><span>命中率</span><b id="downRate">—</b></div>
+        </div>
+        <div class="round-chart" id="downRounds"></div>
+      </article>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">LIVE WINDOW</p><h2>当前5分钟</h2></div>
+        <div class="legend"><span class="spot-line">BTC偏离</span><span class="up-line">Up Ask</span><span class="down-line">Down Ask</span></div>
+      </div>
+      <canvas id="chart" height="230"></canvas>
+      <div class="quote-strip">
+        <span>Up Ask <b id="upAsk">—</b></span>
+        <span>Down Ask <b id="downAsk">—</b></span>
+        <span>入场线 <b>0.37</b></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">RECENT FILLS</p><h2>最近成交</h2></div>
+        <span class="muted" id="updatedAt">—</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>方向</th><th>结果</th><th>投入</th><th>成交秒</th><th>触价</th><th>本笔盈亏</th></tr></thead>
+          <tbody id="tradeRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
+
