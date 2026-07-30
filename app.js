@@ -134,7 +134,12 @@ async function refresh() {
     $("totalPnl").textContent = money(summary.total_realized_pnl);
     colorize($("totalPnl"), summary.total_realized_pnl);
     $("openRisk").textContent = stake(summary.total_open_risk);
-    $("marketCount").textContent = `已完成 ${summary.completed_markets || 0} 个市场`;
+    const completedMarkets = summary.completed_markets || 0;
+    const targetMarkets = summary.valid_market_target || 1000;
+    const remainingMarkets = summary.markets_remaining_to_target
+      ?? Math.max(0, targetMarkets - completedMarkets);
+    $("marketCount").textContent =
+      `有效市场 ${completedMarkets} / ${targetMarkets} · 还差 ${remainingMarkets} 期`;
     renderLine("up", lines.Up); renderLine("down", lines.Down);
     renderTrades(data.trades || []); drawChart(data.chart || []);
     const last = data.chart?.at(-1);
